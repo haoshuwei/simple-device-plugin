@@ -7,22 +7,26 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/NVIDIA/gpu-monitoring-tools/bindings/go/nvml"
 	"github.com/fsnotify/fsnotify"
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
 
 func main() {
 	log.Println("Loading NVML")
-	if err := nvml.Init(); err != nil {
-		log.Printf("Failed to initialize NVML: %s.", err)
-		log.Printf("If this is a GPU node, did you set the docker default runtime to `nvidia`?")
-		log.Printf("You can check the prerequisites at: https://github.com/NVIDIA/k8s-device-plugin#prerequisites")
-		log.Printf("You can learn how to set the runtime at: https://github.com/NVIDIA/k8s-device-plugin#quick-start")
+	//if err := nvml.Init(); err != nil {
+	//	log.Printf("Failed to initialize NVML: %s.", err)
+	//	log.Printf("If this is a GPU node, did you set the docker default runtime to `nvidia`?")
+	//	log.Printf("You can check the prerequisites at: https://github.com/NVIDIA/k8s-device-plugin#prerequisites")
+	//	log.Printf("You can learn how to set the runtime at: https://github.com/NVIDIA/k8s-device-plugin#quick-start")
+	//
+	//	select {}
+	//}
+	//defer func() { log.Println("Shutdown of NVML returned:", nvml.Shutdown()) }()
 
-		select {}
+	newResourceName := os.Getenv("resourcename")
+	if newResourceName != "" {
+		resourceName = newResourceName
 	}
-	defer func() { log.Println("Shutdown of NVML returned:", nvml.Shutdown()) }()
 
 	log.Println("Fetching devices.")
 	if len(getDevices()) == 0 {
