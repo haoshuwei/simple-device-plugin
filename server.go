@@ -17,8 +17,9 @@ import (
 )
 
 var 	resourceName           = "nvidia.com/gpu"
+var	serverSock             = pluginapi.DevicePluginPath + "nvidia.sock"
 const (
-	serverSock             = pluginapi.DevicePluginPath + "nvidia.sock"
+	//serverSock             = pluginapi.DevicePluginPath + "nvidia.sock"
 	envDisableHealthChecks = "DP_DISABLE_HEALTHCHECKS"
 	allHealthChecks        = "xids"
 )
@@ -152,11 +153,12 @@ func (m *NvidiaDevicePlugin) unhealthy(dev *pluginapi.Device) {
 // Allocate which return list of devices.
 func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	devs := m.devs
+	name := fmt.Sprintf("NVIDIA_VISIBLE_DEVICES/%v", resourceName)
 	responses := pluginapi.AllocateResponse{}
 	for _, req := range reqs.ContainerRequests {
 		response := pluginapi.ContainerAllocateResponse{
 			Envs: map[string]string{
-				"NVIDIA_VISIBLE_DEVICES": strings.Join(req.DevicesIDs, ","),
+				name: strings.Join(req.DevicesIDs, ","),
 			},
 		}
 

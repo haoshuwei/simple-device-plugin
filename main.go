@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 	"syscall"
-
+	"fmt"
+	"strings"
 	"github.com/fsnotify/fsnotify"
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
 )
@@ -27,6 +28,8 @@ func main() {
 	if newResourceName != "" {
 		resourceName = newResourceName
 	}
+	
+	serverSock = fmt.Sprintf("%v%v.sock", pluginapi.DevicePluginPath, strings.Split(resourceName, "/")[1])	
 
 	log.Println("Fetching devices.")
 	if len(getDevices()) == 0 {
