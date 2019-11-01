@@ -68,30 +68,32 @@ func dial(unixSocketPath string, timeout time.Duration) (*grpc.ClientConn, error
 
 // Start starts the gRPC server of the device plugin
 func (m *NvidiaDevicePlugin) Start() error {
+	// 删除以前的服务器地址 因为要启动一个新的
+	// 就是删除m.socket=/var/lib/kubelet/device-plugins/nvidia.sock
 	err := m.cleanup()
 	if err != nil {
 		return err
 	}
 
+	// 启动服务 由于是本地进程间交流 所以用unix启动
 	sock, err := net.Listen("unix", m.socket)
 	if err != nil {
 		return err
 	}
-
+	// 注册m为pluginapi的服务器端
 	m.server = grpc.NewServer([]grpc.ServerOption{}...)
 	pluginapi.RegisterDevicePluginServer(m.server, m)
-
+	// goroutine方法启动
 	go m.server.Serve(sock)
 
 	// Wait for server to start by launching a blocking connexion
+	// 试一下有没有创建成功
 	conn, err := dial(m.socket, 5*time.Second)
 	if err != nil {
 		return err
 	}
 	conn.Close()
-
 	go m.healthcheck()
-
 	return nil
 }
 
@@ -110,19 +112,23 @@ func (m *NvidiaDevicePlugin) Stop() error {
 
 // Register registers the device plugin for the given resourceName with Kubelet.
 func (m *NvidiaDevicePlugin) Register(kubeletEndpoint, resourceName string) error {
+	// kubeletEndpoint = /var/lib/kubelet/device-plugins/kubelet.sock
 	conn, err := dial(kubeletEndpoint, 5*time.Second)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
+	// 创建一个连接服务器(地址为kubeletEndpoint)的客户端 就是device manager
 	client := pluginapi.NewRegistrationClient(conn)
+	// 构造请求内容
 	reqt := &pluginapi.RegisterRequest{
 		Version:      pluginapi.Version,
 		Endpoint:     path.Base(m.socket),
 		ResourceName: resourceName,
 	}
-
+	// 向device manager注册信息
+	// 可以看到device manager也是pluginapi的服务器
+	// 此时的NvidiaDevicePlugin为客户端 实现了Register方法
 	_, err = client.Register(context.Background(), reqt)
 	if err != nil {
 		return err
@@ -182,7 +188,6 @@ func (m *NvidiaDevicePlugin) cleanup() error {
 	if err := os.Remove(m.socket); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-
 	return nil
 }
 
@@ -213,13 +218,14 @@ func (m *NvidiaDevicePlugin) healthcheck() {
 
 // Serve starts the gRPC server and register the device plugin to Kubelet
 func (m *NvidiaDevicePlugin) Serve() error {
+	// 启动当前服务 作为pluginapi的服务器端 供device manager调用
 	err := m.Start()
 	if err != nil {
 		log.Printf("Could not start device plugin: %s", err)
 		return err
 	}
 	log.Println("Starting to serve on", m.socket)
-
+	// 向kubelet发请求 其实就是向device manager发请求
 	err = m.Register(pluginapi.KubeletSocket, resourceName)
 	if err != nil {
 		log.Printf("Could not register device plugin: %s", err)

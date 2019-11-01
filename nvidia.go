@@ -26,7 +26,6 @@ func getDevices() []*pluginapi.Device {
 			Health: pluginapi.Healthy,
 		})
 	}
-
 	return devs
 }
 
