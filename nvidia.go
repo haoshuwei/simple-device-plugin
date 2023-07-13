@@ -5,6 +5,8 @@ package main
 import (
 	"fmt"
 	"log"
+        "os"
+        "strconv"
 
 	"golang.org/x/net/context"
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
@@ -18,6 +20,11 @@ func check(err error) {
 
 func getDevices() []*pluginapi.Device {
 	n := uint(10)
+        s, err := strconv.Atoi(os.Getenv("gpu"))
+        if err == nil {
+            n = uint(s)
+            fmt.Println("getDevices: ", n)
+        }
 
 	var devs []*pluginapi.Device
 	for i := uint(0); i < n; i++ {
