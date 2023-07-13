@@ -138,7 +138,7 @@ func (m *NvidiaDevicePlugin) Register(kubeletEndpoint, resourceName string) erro
 
 // ListAndWatch lists devices and update that list according to the health status
 func (m *NvidiaDevicePlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
-    time.Sleep(time.Second * 10)
+    //time.Sleep(time.Second * 10)
 	s.Send(&pluginapi.ListAndWatchResponse{Devices: m.devs})
 	fmt.Println("111start send", &pluginapi.ListAndWatchResponse{Devices: m.devs})
 
